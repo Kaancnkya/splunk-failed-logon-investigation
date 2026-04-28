@@ -1,18 +1,19 @@
 # Splunk Queries — Failed Logon Investigation (EventCode 4625)
 
-All queries use `sourcetype="WinEventLog:Security"`. If your Splunk instance uses a different sourcetype, run `index=* EventCode=4625 | head 5` first to confirm the correct value.
+> **Environment note:** These queries use field names confirmed in a Windows Server environment with Splunk Universal Forwarder and `sourcetype=WinEventLog:Security`. Field names can vary between Splunk versions and configurations. Always expand a raw event first to verify field names before querying.
 
-> **Field name note:** Windows Security Event Logs use `TargetUserName`, not `user` or `username`. Using the wrong field name returns no results — this is a common beginner mistake.
-
-> **SubStatus note:** SubStatus may appear as a decimal integer in some Splunk configurations. If you see a number like `3221225514` instead of `0xC000006A`, add `| eval SubStatus=tostring(SubStatus,"hex")` to any of the queries below.
+> **Field names in this environment:**
+> - Account name → `Account_Name` *(in some environments: `TargetUserName`)*
+> - Source IP → `Source_Network_Address` *(in some environments: `IpAddress`)*
+> - Failure code → `Sub_Status` *(in some environments: `SubStatus`)*
 
 ---
 
 ## Query 1 — Who is being targeted?
 
 ```spl
-index=* sourcetype="WinEventLog:Security" EventCode=4625
-| stats count by TargetUserName
+index=main EventCode=4625
+| stats count by Account_Name
 | sort -count
 ```
 
@@ -24,8 +25,8 @@ index=* sourcetype="WinEventLog:Security" EventCode=4625
 ## Query 2 — Where is the attack coming from?
 
 ```spl
-index=* sourcetype="WinEventLog:Security" EventCode=4625
-| stats count by TargetUserName, IpAddress
+index=main EventCode=4625
+| stats count by Account_Name, Source_Network_Address
 | sort -count
 ```
 
@@ -39,20 +40,20 @@ index=* sourcetype="WinEventLog:Security" EventCode=4625
 ## Query 3 — What type of failure?
 
 ```spl
-index=* sourcetype="WinEventLog:Security" EventCode=4625
-| stats count by TargetUserName, IpAddress, SubStatus
+index=main EventCode=4625
+| stats count by Account_Name, Source_Network_Address, Sub_Status
 | sort -count
 ```
 
-**What it does:** Adds SubStatus to the previous query. Each row now tells you who, where, and why the logon failed.
-**What to look for:** See SubStatus reference table below.
+**What it does:** Adds Sub_Status to the previous query. Each row now tells you who, where, and why the logon failed.
+**What to look for:** See Sub_Status reference table below.
 
 ---
 
-## SubStatus Reference
+## Sub_Status Reference
 
-| SubStatus Code | Meaning | Attack Implication |
-|---------------|---------|-------------------|
+| Sub_Status Code | Meaning | Attack Implication |
+|----------------|---------|-------------------|
 | `0xC000006A` | Correct username, wrong password | Brute force — attacker knows the account is real |
 | `0xC0000064` | Username does not exist | Enumeration — attacker is guessing account names |
 | `0xC0000234` | Account is locked out | Lockout threshold was triggered |
@@ -60,13 +61,13 @@ index=* sourcetype="WinEventLog:Security" EventCode=4625
 
 ---
 
-## Optional: Convert SubStatus from decimal to hex
+## Optional: Convert Sub_Status from decimal to hex
+
+If `Sub_Status` appears as a large decimal number (e.g. `3221225514` instead of `0xC000006A`):
 
 ```spl
-index=* sourcetype="WinEventLog:Security" EventCode=4625
-| eval SubStatus=tostring(SubStatus,"hex")
-| stats count by TargetUserName, IpAddress, SubStatus
+index=main EventCode=4625
+| eval Sub_Status=tostring(Sub_Status,"hex")
+| stats count by Account_Name, Source_Network_Address, Sub_Status
 | sort -count
 ```
-
-**Use this if:** SubStatus appears as a large decimal number instead of a hex code in your results.

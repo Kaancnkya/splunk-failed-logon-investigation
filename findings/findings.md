@@ -18,8 +18,8 @@ A high-volume failed logon pattern was identified against a single Windows accou
 |-------|-------|
 | Target Account | Henrique |
 | Source IP | 127.0.0.1 *(lab environment — represents attacker IP in a real deployment)* |
-| Failed Attempt Count | 25 |
-| SubStatus | `0xC000006A` — correct username, wrong password |
+| Failed Attempt Count | 17 |
+| Sub_Status | `0xC000006A` — correct username, wrong password |
 | Time Window | Within 1 minute |
 | LogonType | 3 (Network) |
 
@@ -29,7 +29,7 @@ A high-volume failed logon pattern was identified against a single Windows accou
 
 **Consistent with: Targeted Brute Force**
 
-SubStatus `0xC000006A` on every event indicates the attacker used a valid account name and repeatedly submitted incorrect passwords — the pattern associated with credential guessing against a known account.
+Sub_Status `0xC000006A` on every event indicates the attacker used a valid account name and repeatedly submitted incorrect passwords — the pattern associated with credential guessing against a known account.
 
 This is distinct from account enumeration (`0xC0000064`), where an attacker probes for valid usernames. In enumeration, most SubStatus values would be `0xC0000064` (username does not exist), not `0xC000006A`.
 
@@ -42,9 +42,9 @@ This is distinct from account enumeration (`0xC0000064`), where an attacker prob
 ```
 Source IP:        127.0.0.1
 Target Account:   Henrique
-Event Count:      25
+Event Count:      17
 EventCode:        4625 (Failed Logon)
-SubStatus:        0xC000006A (correct username, wrong password)
+Sub_Status:       0xC000006A (correct username, wrong password)
 LogonType:        3 (Network)
 Time Window:      [start timestamp] to [end timestamp]
 Pattern:          Consistent with Targeted Brute Force
