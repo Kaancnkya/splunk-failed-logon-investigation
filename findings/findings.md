@@ -8,7 +8,7 @@
 
 ## Summary
 
-A targeted brute force attack was identified against a single Windows account. The attacker submitted repeated logon attempts using a known valid username but incorrect password, consistent with a credential-guessing campaign.
+A high-volume failed logon pattern was identified against a single Windows account. The evidence is consistent with a targeted brute force attempt: one source IP, one target account, high event count within a short time window, and SubStatus 0xC000006A confirming the attacker used a valid username with incorrect passwords.
 
 ---
 
@@ -25,13 +25,15 @@ A targeted brute force attack was identified against a single Windows account. T
 
 ---
 
-## Attack Classification
+## Pattern Classification
 
-**Targeted Brute Force**
+**Consistent with: Targeted Brute Force**
 
-SubStatus `0xC000006A` on every event confirms the attacker knew the account name. The high attempt count from a single source IP within a short time window is consistent with an automated credential attack.
+SubStatus `0xC000006A` on every event indicates the attacker used a valid account name and repeatedly submitted incorrect passwords — the pattern associated with credential guessing against a known account.
 
-This is distinct from account enumeration (`0xC0000064`), where an attacker probes for valid usernames. Here, the username was already known — the goal was the password.
+This is distinct from account enumeration (`0xC0000064`), where an attacker probes for valid usernames. In enumeration, most SubStatus values would be `0xC0000064` (username does not exist), not `0xC000006A`.
+
+> **Note:** In a real environment, pattern classification should be treated as a working hypothesis until corroborated with additional context (e.g., threat intelligence on the source IP, whether a successful logon followed, whether the account was newly created). In this lab, the events were generated under controlled conditions to demonstrate the pattern.
 
 ---
 
@@ -45,7 +47,7 @@ EventCode:        4625 (Failed Logon)
 SubStatus:        0xC000006A (correct username, wrong password)
 LogonType:        3 (Network)
 Time Window:      [start timestamp] to [end timestamp]
-Classification:   Targeted Brute Force
+Pattern:          Consistent with Targeted Brute Force
 
 Next Step:        Check EventCode 4624 (Successful Logon) for the same source IP
                   to determine whether any attempt succeeded.
