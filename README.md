@@ -19,21 +19,21 @@ A hands-on investigation of failed Windows logon events using Splunk and real Wi
 
 1. Confirm events exist in Splunk: `index=* EventCode=4625 | head 5`
 2. Open Windows Event Viewer — Security log — confirm EventCode 4625 is generated natively
-3. Expand a raw event in Splunk — identify available fields: `TargetUserName`, `IpAddress`, `SubStatus`, `LogonType`
+3. Expand a raw event in Splunk — identify available fields: `Account_Name`, `Source_Network_Address`, `Sub_Status`, `Logon_Type`
 4. **Query 1:** Count failed logons by target account — find who is being attacked
 5. **Query 2:** Add source IP — find where the attack is coming from
-6. **Query 3:** Add SubStatus — determine what type of failure and what it means
+6. **Query 3:** Add Sub_Status — determine what type of failure and what it means
 
 ---
 
 ## Key Findings
 
-- **25 failed logon attempts** recorded against a single account within a 1-minute window
+- **17 failed logon attempts** recorded against a single account within a short time window
 - All attempts originated from the **same source IP**
-- SubStatus on every event: `0xC000006A` — correct username, wrong password
+- Sub_Status on every event: `0xC000006A` — correct username, wrong password
 - **Pattern: Consistent with Targeted Brute Force**
 
-The SubStatus code is the critical differentiator:
+The Sub_Status code is the critical differentiator:
 
 | SubStatus | Meaning | Attack Pattern |
 |-----------|---------|----------------|
@@ -49,17 +49,23 @@ The SubStatus code is the critical differentiator:
 ### Source Event — Windows Event Viewer
 ![Event Viewer showing EventCode 4625 in Security log](screenshots/01-event-viewer-4625.png)
 
-### Expanded Raw Event in Splunk
-![Splunk — expanded 4625 event showing SubStatus and TargetUserName](screenshots/02-splunk-event-expanded.png)
+### Expanded Raw Event in Splunk — Field Overview
+![Splunk — expanded 4625 event, Account_Name and EventCode visible](screenshots/02a-splunk-event-fields-top.png)
+
+### Expanded Raw Event in Splunk — Logon Details
+![Splunk — expanded 4625 event, Logon_Type=3 and Message field](screenshots/02b-splunk-event-fields-mid.png)
+
+### Expanded Raw Event in Splunk — Key Investigation Fields
+![Splunk — expanded 4625 event, Source_Network_Address=127.0.0.1 and Sub_Status=0xC000006A](screenshots/02c-splunk-event-fields-bottom.png)
 
 ### Query 1 — Who is targeted?
-![Query 1 results — TargetUserName sorted by count](screenshots/03-query1-targetusername.png)
+![Query 1 results — Account_Name sorted by count](screenshots/03-query1-targetusername.png)
 
 ### Query 2 — Where is it coming from?
-![Query 2 results — TargetUserName, IpAddress, count](screenshots/04-query2-ipaddress.png)
+![Query 2 results — Account_Name, Source_Network_Address, count](screenshots/04-query2-ipaddress.png)
 
 ### Query 3 — What type of failure?
-![Query 3 results — SubStatus column visible](screenshots/05-query3-substatus.png)
+![Query 3 results — Sub_Status column visible](screenshots/05-query3-substatus.png)
 
 ### Attack Pattern
 ![Final results — brute force pattern identified](screenshots/06-finding-summary.png)
@@ -70,7 +76,7 @@ The SubStatus code is the critical differentiator:
 
 - Splunk Search & Reporting: SPL queries with `stats`, `sort`, `eval`
 - Windows Security Event Log analysis: source confirmation in Event Viewer, EventCode 4625 field structure
-- SubStatus code interpretation: brute force vs. enumeration classification
+- Sub_Status code interpretation: brute force vs. enumeration classification
 - Progressive investigation: building from "who" to "where" to "why"
 - SOC ticket writing: structured finding documentation
 
